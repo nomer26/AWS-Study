@@ -1,0 +1,199 @@
+## 스터디 문제풀이(3/28)
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/102c3eb9-a543-4c8c-bd2b-100cb780d9bc/Untitled.png)
+
+```
+제출 답안 : **B. CloudFront를 배포한다 (정답)**
+
+풀이 : [참고링크](https://aws.amazon.com/ko/blogs/korea/amazon-s3-amazon-cloudfront-a-match-made-in-the-cloud/)
+
+콘텐츠 배포 네트워크(CDN) 서비스가 등장하기 전에는 특정 지역에 서버를 일일이 두고 서비스를 해야 했음.
+**AWS S3**와 **AWS CloundFront**를 이용하여 정적 콘텐츠를 대규모로 저장하고 보호, 전송할 수 있음
+
+AWS S3 : 정적 콘텐츠를 “버킷(Bucket)”에 무제한으로 저장하고 손쉽게 확장이 가능한 고가용성 데이터 스토리지를 저렴한 비용으로 제공
+  -> S3 버킷은 자동으로 확장 및 축소되어 스토리지 공간을 사전에 특정할 필요가 없음
+  -> 애플리케이션에 서버가 필요하더라도 정적 콘텐츠에 대한 요청을 처리할 필요가 없어 서버 크기 줄일 수 있음
+**AWS CloundFront** : 전 세계의 정적/동적 웹 콘텐츠, 비디오 스트림 및 API를 안전하게 대규모로 전송할 수 있는 콘텐츠 전송 네트워크(CDN) 서비스
+	-> 엣지 로케이션을 통해 최종 사용자가 위치한 곳에 더 가깝게 컨텐츠를 전송가능(성능 향상)
+	-> 사용자가 요청하는 파일이 CloudFront에 캐싱되어 있으면 빠르게 응답 / 파일이 없으면 오리진 서버(버킷 등)에서 가져와서 캐싱한 뒤 다음엔 캐싱 데이터로 빠르게 응답 가능
+	-> CloudFront는 캐싱 파일을 쓰므로 S3의 부하를 줄이고 비용도 줄일 수 있음(이미 캐싱된 파일 사본으로 응답하므로 S3 -> CloudFront로 전송되는 파일이 없기때문)
+
+**결론 : 컨텐츠를 S3에서 바로 불러오는 것보다 CloudFront를 통해 사용자에 제일 가까운 엣지 로케이션에 컨텐츠의 캐싱 파일을 만든 뒤 이를 통해 불러오는 것이 훨씬 빠르고 저렴**
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/5b678570-4deb-4f80-9988-d2198abebbd7/Untitled.png)
+
+```
+제출 답안 : A**. AWS Storage Gateway를 배포하고 - (정답)
+
+풀이 :** [참고링크](https://aws.amazon.com/ko/cloud-data-migration/)
+
+AWS 하이브리드 클라우드 스토리지 아키텍처는 온프레미스 애플리케이션과 시스템을 클라우드 스토리지로 연결해서 비용을 절감하고, 관리 부담을 최소화한다
+
+AWS Storage Gateway([참고](https://docs.aws.amazon.com/ko_kr/storagegateway/latest/userguide/WhatIsStorageGateway.html)) :무제한의 클라우드 스토리지 액세스를 온프레미스에 제공하는 하이브리드 클라우드 스토리지 서비스 세트
+										 온프레미스 소프트웨어 어플라이언스를 클라우드 기반 스토리지에 연결
+   1) File Gateway[(참고)](https://aws.amazon.com/ko/storagegateway/file/) : Amazon S3 File Gateway를 사용하여 Amazon S3 클라우드 스토리지에 객체로 저장 / 
+										       Amazon FSx File Gateway를 사용하여 온프레미스에서 짧은 대기 시간으로 완전 관리형 파일 공유에 액세스
+
+AWS Direct Connect : 사용자의 네트워크와 AWS Direct Connect 위치 중 하나 사이에 전용 네트워크 연결을 설정
+
+Amazon Elastic File System([참고](https://aws.amazon.com/ko/efs/?nc2=type_a)) : 파일을 추가하고 제거할 때 자동으로 확장되고 축소 / 한 번만 설정하면 되는 단순한 탄력적 서버리스 파일 시스템(관리 / 프로비저닝 불필요)
+
+AWS DataSync : 온프레미스와 AWS 스토리지 서비스 사이 데이터 마이그레이션 툴
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/aafa8567-edd4-4c9a-823b-a1b8949a5af9/Untitled.png)
+
+```python
+제출 답안 : D. Amazon RDS 캐싱을 사용 **(오답)**
+정답 : B. Amazon RDS 읽기 복제본 및 다중 AZ
+
+**풀이 : [참고링크](https://aws.amazon.com/ko/rds/features/multi-az/)
+
+Amazon RDS 다중 AZ 배포 :** 자동으로 프라이머리 DB 인스턴스를 생성 + 다른 AZ의 인스턴스에 데이터를 복제
+											   장애를 감지하면 수동 개입 없이 자동으로 대기 인스턴스로 장애 조치
+
+읽기 가능한 대기가 2개인 Amazon RDS 다중 AZ
+ -> 쿼리를 쓰기 서버와 적절한 읽기 전용 복제본 대기 인스턴스로 경로 지정하여 성능과 확장성을 극대화
+ -> 최대 2배 빠른 트랜잭션 커밋 대기 시간 확보
+ -> 2개의 읽기 가능한 대기 인스턴스에 트래픽을 분산하여 읽기 확장성을 확보'
+
+**결론 : 여러 AZ에 읽기 가능한 복제본을 준비하여 대기 시간을 더 빠르게 하고 트래픽 분산까지 달성**
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/ca6a139e-8f77-440e-b722-8a8e2afaac4b/Untitled.png)
+
+```python
+제출 답안 : **B. CloudFormation (정답)
+
+AWS Elastic Beanstalk** : 애플리케이션을 업로드하기만 하면 용량 프로비저닝, 로드 밸런싱, 조정, 애플리케이션 상태 모니터링에 대한 세부 정보를 자동으로 처리
+**AWS CloudFormation :** 인프라를 코드로 처리하여 AWS 및 서드 파티 리소스를 모델링, 프로비저닝 및 관리
+**Amazon Elastic Container Service** : 컨테이너화된 애플리케이션의 손쉬운 배포, 관리 및 크기 조정을 지원하는 완전관리형 컨테이너 오케스트레이션 서비스
+**AWS CloundFront** : 전 세계의 정적/동적 웹 콘텐츠, 비디오 스트림 및 API를 안전하게 대규모로 전송할 수 있는 콘텐츠 전송 네트워크(CDN) 서비스
+**AWS Outpost :** 온프레미스에서 AWS 인프라 및 서비스 실행
+
+```
+
+---
+
+## 스터디 문제풀이(3/29)
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/78ebc58d-b9cb-4c02-b41c-fb3ff3397cb6/Untitled.png)
+
+```
+제출 답안 : C. 볼륨을 프로비저닝된 IOPS 볼륨으로 교체 (정답)
+
+****풀이 :
+
+Amazon EBS ([EBS](https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/ebs-volumes.html), [볼륨 유형](https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/ebs-volume-types.html)) : 내구성이 있는 블록 수준 스토리지 디바이스 / 인스턴스의 수명에 관계없이 유지되는 오프 인스턴스 스토리지
+ EBS의 SSD 유형
+	1) 범용 SSD
+   -> 99.8%~99.9% 내구성
+	 -> 지연 시간이 짧은 대화형 앱
+  2) Provisioned IOPS SSD
+   -> 99.999% 내구성
+	 -> 지속적인 IOPS 성능 또는 16,000 IOPS 이상이 필요한 워크로드
+
+Amazon CloudWatch : 하이브리드 및 온프레미스 애플리케이션 및 인프라 리소스에 대한 데이터와 실행 가능한 인사이트를 제공하는 모니터링 및 관리 서비스
+										전체 스택 모니터링, 로그 등 이벤트 데이터를 사용하여 자동화된 조치하여 MTTR(Mean Time to Resolution)을 단축
+
+**결론 : 더 높은 IOPS를 감당하기 위해서는 기존 범용 SSD에서 프로비저닝된 SSD 볼륨으로 교체하면 됨**
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/f4df8bd6-32d3-425d-8d0e-45f194c7be53/Untitled.png)
+
+```
+제출 답안 : D (정답)
+
+**풀이 :** 
+300개 이상의 웹사이트와 앱을 호스팅하며 30TB의 클릭스트림 데이터를 분석하기 위해서는 큰 데이터를 관리할 수 있는 서비스가 필요
+
+AWS RedShift ([참고](https://aws.amazon.com/ko/redshift/)) : 페타바이트급 데이터 웨어하우스 서비스
+ -> SQL을 사용하여 여러 데이터 웨어하우스, 운영 데이터베이스 및 데이터 레이크에서 정형 데이터 및 반정형 데이터를 분석
+
+Amazon Kinesis Data Streams ([참고](https://aws.amazon.com/ko/kinesis/data-streams/)) : 모든 규모의 데이터 스트림을 쉽게 캡처, 처리 및 저장할 수 있는 서버리스 스트리밍 데이터 서비스
+ -> 클릭스트림과 같은 빈도가 높은 이벤트 데이터용 애플리케이션을 구축 
+ -> AWS Lambda / Amazon Kinesis Data Analytics 과 연동하여 데이터 인사이트 확보
+
+Amazon Kinesis Data Analytics(참[고](https://aws.amazon.com/ko/kinesis/data-analytics/features/)) : 실시간 분석을 포함한 다양한 사용 사례에 특화된 Java, Scala, Python 및 SQL 기반의 유연한 API를 제공
+Amazon Kinesis Data Firehose([참고](https://aws.amazon.com/ko/kinesis/data-firehose/)) : 스트리밍 데이터를 안정적으로 캡처하고 변환하여 데이터 레이크, 데이터 스토어, 분석 서비스에 전달하는 추출, 변환 로드 서비스
+
+AWS Data Pipeline([참고](https://aws.amazon.com/ko/datapipeline/)) : 온프레미스 데이터 소스뿐 아니라 여러 AWS 컴퓨팅 및 스토리지 서비스 간에 데이터를 안정적으로 처리하고 지정된 간격으로 이동할 수 있게 지원하는 웹 서비스
+
+** 궁금한 점
+30TB의 데이터를 분석하는데는 빅데이터 관련 서비스인 EMR이 더 낫지 않은지?
+EMR이 페타바이트 급 데이터를 분석하는 툴이라서 TB 정도 데이터는 취급을 안하는건지? ([참고:EMR](https://aws.amazon.com/ko/emr/?c=a&sec=srv))
+```
+
+---
+
+## 스터디 문제풀이(3/30)
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/3981ee66-029e-4071-a92e-76c6bf75411f/Untitled.png)
+
+```
+제출 답안 : C(오답) -> 정답 A
+
+****풀이 : 
+S3에서 정적 웹 사이트를 호스팅 할 수 있다. 
+버전 관리가 비활성화 되어있어야 한다.
+
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/ad257b11-8609-4564-bdf7-ff493c48b912/Untitled.png)
+
+```
+제출 답안 : D(오답) -> 정답 **B**
+
+**풀이 :** [(참조)](https://dynobase.dev/dynamodb-vs-aurora/)
+**DynamoDB :** 모든 규모에서 빠르고 유연한 비관계형 데이터베이스 페타바이트까지 핸들 가능
+Amazon Aurora : 클라우드용으로 구축된 MySQL 및 PostgreSQL 호환 관계형 데이터베이스
+Amazon Simple Queue Service(SQS): 분산 시스템 및 서버리스 애플리케이션을 쉽게 분리하고 확장할 수 있도록 지원하는 완전관리형 메시지 대기열 서비스
+Amazon Simple Notification Service(SNS) : 클라우드에서 손쉽게 알림을 설정, 운영 및 전송할 수 있도록 하는 웹 서비스
+
+결론: 대규모 데이타에 적합한 것은 다이나모DB
+```
+
+## 스터디 문제풀이(4/1)
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/66e69a8e-59e1-4822-8a43-5fae4edfaf1f/Untitled.png)
+
+```
+제출 답안 : D(오답) -> 정답 **B**
+
+**풀이 :** [(참조)](https://dynobase.dev/dynamodb-vs-aurora/)
+**DynamoDB :** 모든 규모에서 빠르고 유연한 비관계형 데이터베이스 페타바이트까지 핸들 가능
+Amazon Aurora : 클라우드용으로 구축된 MySQL 및 PostgreSQL 호환 관계형 데이터베이스
+Amazon Simple Queue Service(SQS): 분산 시스템 및 서버리스 애플리케이션을 쉽게 분리하고 확장할 수 있도록 지원하는 완전관리형 메시지 대기열 서비스
+Amazon Simple Notification Service(SNS) : 클라우드에서 손쉽게 알림을 설정, 운영 및 전송할 수 있도록 하는 웹 서비스
+
+결론: 대규모 데이타에 적합한 것은 다이나모DB
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/6a7cdc3f-782f-4196-8880-78dae9aecd25/Untitled.png)
+
+```
+제출 답안 : D(오답) -> 정답 **B**
+
+**풀이 :** [(참조)](https://dynobase.dev/dynamodb-vs-aurora/)
+**DynamoDB :** 모든 규모에서 빠르고 유연한 비관계형 데이터베이스 페타바이트까지 핸들 가능
+Amazon Aurora : 클라우드용으로 구축된 MySQL 및 PostgreSQL 호환 관계형 데이터베이스
+Amazon Simple Queue Service(SQS): 분산 시스템 및 서버리스 애플리케이션을 쉽게 분리하고 확장할 수 있도록 지원하는 완전관리형 메시지 대기열 서비스
+Amazon Simple Notification Service(SNS) : 클라우드에서 손쉽게 알림을 설정, 운영 및 전송할 수 있도록 하는 웹 서비스
+
+결론: 대규모 데이타에 적합한 것은 다이나모DB
+```
+
+![Untitled](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/acf493fa-0a8f-4ee3-ad22-f4e2a65e3e50/Untitled.png)
+
+```
+제출 답안 : D(오답) -> 정답 **B**
+
+**풀이 :** [(참조)](https://dynobase.dev/dynamodb-vs-aurora/)
+**DynamoDB :** 모든 규모에서 빠르고 유연한 비관계형 데이터베이스 페타바이트까지 핸들 가능
+Amazon Aurora : 클라우드용으로 구축된 MySQL 및 PostgreSQL 호환 관계형 데이터베이스
+Amazon Simple Queue Service(SQS): 분산 시스템 및 서버리스 애플리케이션을 쉽게 분리하고 확장할 수 있도록 지원하는 완전관리형 메시지 대기열 서비스
+Amazon Simple Notification Service(SNS) : 클라우드에서 손쉽게 알림을 설정, 운영 및 전송할 수 있도록 하는 웹 서비스
+
+결론: 대규모 데이타에 적합한 것은 다이나모DB
+```
